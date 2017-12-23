@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private static ArrayList<String> mImageUrl;
     private int mChosenCeleb = 0;
     private int mCorrectButtonChoice;
+    private Bitmap mMyBitmap;
+    private Random mRandom;
+    String[] answers = new String[4];
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
         images = new ArrayList<>();
         names = new ArrayList<>();
         mImageUrl = new ArrayList<>();
-        String[] answers = new String[4];
 
         name1Btn = findViewById(R.id.button1);
         name2Btn = findViewById(R.id.button2);
@@ -72,28 +76,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-            Random random = new Random();
-            mChosenCeleb = random.nextInt(mImageUrl.size());
-            mCorrectButtonChoice = random.nextInt(4);
+            placeImage();
 
-            DownloadImage imageTask = new DownloadImage();
-
-            Bitmap myBitmap;
-            myBitmap = imageTask.execute(mImageUrl.get(mChosenCeleb)).get();
-
-            if (myBitmap != null) {
-                image.setImageBitmap(myBitmap);
-
-                for (int i = 0; i < 4; i++) {
-                    if (i == mCorrectButtonChoice){
-                        answers[i] = names.get(mChosenCeleb);
-                    }else{
-                        answers[i] = names.get(random.nextInt(mImageUrl.size()));
-                    }
-
-                }
-
-            }
+            placeNames();
 
 
         } catch (Exception e) {
@@ -101,22 +86,71 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    private void placeNames() {
+
+        mCorrectButtonChoice = mRandom.nextInt(4);
+        int random;
+
+        if (mMyBitmap != null) {
+
+            for (int i = 0; i < 4; i++) {
+
+
+                if (i == mCorrectButtonChoice){
+                    answers[i] = names.get(mChosenCeleb);
+                }else{
+                    random = mRandom.nextInt(mImageUrl.size());
+                    answers[i] = names.get(random);
+                }
+            }
+        }
+
         name1Btn.setText(answers[0]);
         name2Btn.setText(answers[1]);
         name3Btn.setText(answers[2]);
         name4Btn.setText(answers[3]);
+    }
 
+    private void placeImage() throws InterruptedException, ExecutionException {
+        mRandom = new Random();
+        mChosenCeleb = mRandom.nextInt(mImageUrl.size());
 
+        DownloadImage imageTask = new DownloadImage();
 
+        mMyBitmap = imageTask.execute(mImageUrl.get(mChosenCeleb)).get();
+
+        if (mMyBitmap != null){
+            image.setImageBitmap(mMyBitmap);
+            image.setAdjustViewBounds(true);
+        }
     }
 
     protected void buttonClick(View view){
 
 
-//        name1Btn.setText(names.get(count));
-//        image.setImageBitmap(images.get(count));
-        Log.d("bntClick", view.getTag().toString());
-        count++;
+        int tag = Integer.parseInt((String) view.getTag());
+
+        if (tag == mCorrectButtonChoice){
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+        }else  {
+            Toast.makeText(this, "Wrong! The correct answer was: " + answers[mCorrectButtonChoice], Toast.LENGTH_SHORT).show();
+        }
+
+        try {
+
+            placeImage();
+
+            placeNames();
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+
 
     }
 
@@ -178,35 +212,6 @@ public class MainActivity extends AppCompatActivity {
 
                     data = reader.read();
                 }
-
-
-//                Pattern pName = Pattern.compile("alt=\"(.*?)\"");
-//                Matcher mName = pName.matcher(s);
-
-                //parse out the image urls
-//                while (m.find()){
-//                    imageUrl.add(m.group(1));
-//
-//                    try {
-//                        url = new URL(m.group(1));
-//                        connection = (HttpURLConnection) url.openConnection();
-//                        connection.connect();
-//
-//                        inputStream = connection.getInputStream();
-//
-//                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-//                        images.add(bitmap);
-//
-//                        //parse out the celb names
-//                        while (mName.find()){
-//                            names.add(mName.group(1));
-//                        }
-//
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-////
-//                }
-//                }
 
                 return s;
 
